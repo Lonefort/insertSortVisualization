@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<head>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <style>
+        rect {fill: black;}
+        .active {fill: red;}
+    </style>
+</head>
+<body>
+    <div id="buttons">
+        <button onclick="insertionSorting()">Start Insertion Sorting</button>
+    </div>
+</body>
+<script>
+  const amountOfValues = 21,
+        width = 960,
+        height = 300,
+        barWidth = width/amountOfValues;
+
+  let unsortedArray = d3.shuffle(d3.range(1, amountOfValues)),
+      sortedArray = [];
+
+  const scale = d3.scaleLinear()
+          .domain([0, amountOfValues])
+          .range([0, width]);
+
+  const svg = d3.select("body").append("svg")
+          .attr("width", width)
+          .attr("height", height)
+          .style("transform", "scaleY(-1)")
+      
+  const bars = svg.append("g")
+          .attr("transform", `translate(${ barWidth }, 0)`)
+          .selectAll("rect")
+          .data(unsortedArray)
+        .enter().append("rect")
+
+  bars.attr("id", d => "rect" + d)
+    .attr("transform", (d, i) => `translate(${ (scale(i) - barWidth) },0)`)
+    .attr("width", barWidth * 0.9)
+    .attr("height", d => d * 15)
+
+  const insertionSorting = () => {
+    const firstElement = unsortedArray.shift();
+    sortedArray.push(firstElement);
+
+    const itterate = n => {
+      d3.selectAll("rect").attr("class", "")                
+      d3.select("#rect" + firstElement).attr("class", "active")    
+
+      if (n > 0 && sortedArray[n-1] > firstElement) {
+        d3.timeout(() => {
+          sortedArray.splice(n,1);
+          sortedArray.splice(n-1, 0, firstElement);
+          d3.select("#rect" + sortedArray[n]).attr("transform", `translate(${ (scale(n - 1)) }, 0)`)
+          d3.select("#rect" + sortedArray[n-1]).attr("transform", `translate(${ (scale((n - 1) - 1)) }, 0)`)
+
+          itterate(--n)
+        }, 100);
+      } else if (unsortedArray.length) {
+          d3.timeout(() => insertionSorting(), 100);
+      } else {
+        return d3.selectAll("rect").attr("class", "")
+      }
+    }
+    itterate(sortedArray.length - 1);
+  }
+</script>
